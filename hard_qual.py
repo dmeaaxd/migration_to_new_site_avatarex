@@ -98,7 +98,7 @@ for setting in settings_records:
 
 json_output = json.dumps(json_data_list, indent=4, ensure_ascii=False)
 
-with open('ai_qual.json', 'w', encoding='utf-8') as file:
+with open('hard_qual.json', 'w', encoding='utf-8') as file:
     file.write(json_output)
 
 session.close()
