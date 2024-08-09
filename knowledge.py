@@ -7,81 +7,88 @@ from sqlalchemy.ext.automap import automap_base
 
 dotenv.load_dotenv()
 
-engine = create_engine(
-    f'postgresql://{os.getenv("DB_USER")}:{os.getenv("DB_PASSWORD")}'
-    f'@{os.getenv("DB_HOST")}:5432/{os.getenv("DB_NAME")}',
-    pool_pre_ping=True,
-)
 
-Base = automap_base()
+def knowledge():
+    engine = create_engine(
+        f'postgresql://{os.getenv("DB_USER")}:{os.getenv("DB_PASSWORD")}'
+        f'@{os.getenv("DB_HOST")}:5432/{os.getenv("DB_NAME")}',
+        pool_pre_ping=True,
+    )
 
-Base.prepare(engine, reflect=True)
+    Base = automap_base()
 
-Settings = Base.classes.settings
-PromptSettings = Base.classes.prompt_settings
-Pipelines = Base.classes.pipelines
-Statuses = Base.classes.statuses
-AvatarExUsers = Base.classes.avatarex_users
-OpenAIModels = Base.classes.openai_models
+    Base.prepare(engine, reflect=True)
 
-
-Session = sessionmaker(bind=engine)
-session = Session()
-
-settings_records = session.query(Settings).filter(
-    Settings.mode_id == 3,
-    Settings.knowledge_link != '',
-).all()
+    Settings = Base.classes.settings
+    PromptSettings = Base.classes.prompt_settings
+    Pipelines = Base.classes.pipelines
+    Statuses = Base.classes.statuses
+    AvatarExUsers = Base.classes.avatarex_users
+    OpenAIModels = Base.classes.openai_models
 
 
-json_data_list = []
-counter = 0
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    settings_records = session.query(Settings).filter(
+        Settings.mode_id == 3,
+        Settings.knowledge_link != '',
+    ).all()
 
 
-for setting in settings_records:
-    counter += 1
-    prompt_setting = session.query(PromptSettings).filter_by(id=setting.prompt_settings_id).first()
-
-    model_title = session.query(OpenAIModels.title).filter_by(id=setting.model_id).scalar()
+    json_data_list = []
+    counter = 0
 
 
-    json_data = {
-        "name": setting.name,
-        "knowledgeLink": setting.knowledge_link,
-        "contextSettings": {
-            "prompt": prompt_setting.context,
-            "tokens": prompt_setting.max_tokens,
-            "temperature": prompt_setting.temperature,
-        },
-        "paymentSettings": {
-            "isOurTokensStatus": False,
-            "openaiApiKey": session.query(AvatarExUsers).filter_by(id=setting.user_id_id).first().openai_api_key,
-            "gptmodel": model_title if model_title else "default-model",
-        },
-        "stagesAndStatusesSettings": {
-            "enabledPipelineId": setting.pipeline_id_id,
-            "enabledStatusesIds": [status.id for status in session.query(Statuses).all() if status.user_id_id == setting.user_id_id],
-        },
-        "additionalSettings": {
-            "workByTimeStatus": setting.is_date_work_active,
-            "workByTimeStart": setting.datetimeValueStart,
-            "workByTimeEnd": setting.datetimeValueFinish,
-            "deactivateAvatarIfInterventionStatus": setting.is_manager_intervented_active,
-            "interventionDeactivationTime": setting.interventedtimeValue,
-            "delayMessageProcessingStatus": setting.checkbox_processing_new_message,
-            "messageProcessingDelayTime": setting.new_message_processing_time,
-            "processImagesStatus": True,
-            "processVoiceMessagesStatus": setting.voice_detection,
+    for setting in settings_records:
+        counter += 1
+        prompt_setting = session.query(PromptSettings).filter_by(id=setting.prompt_settings_id).first()
+
+        model_title = session.query(OpenAIModels.title).filter_by(id=setting.model_id).scalar()
+
+
+        json_data = {
+            "name": setting.name,
+            "knowledgeLink": setting.knowledge_link,
+            "contextSettings": {
+                "prompt": prompt_setting.context,
+                "tokens": prompt_setting.max_tokens,
+                "temperature": prompt_setting.temperature,
+            },
+            "paymentSettings": {
+                "isOurTokensStatus": False,
+                "openaiApiKey": session.query(AvatarExUsers).filter_by(id=setting.user_id_id).first().openai_api_key,
+                "gptmodel": model_title if model_title else "default-model",
+            },
+            "stagesAndStatusesSettings": {
+                "enabledPipelineId": setting.pipeline_id_id,
+                "enabledStatusesIds": [status.id for status in session.query(Statuses).all() if status.user_id_id == setting.user_id_id],
+            },
+            "additionalSettings": {
+                "workByTimeStatus": setting.is_date_work_active,
+                "workByTimeStart": setting.datetimeValueStart,
+                "workByTimeEnd": setting.datetimeValueFinish,
+                "deactivateAvatarIfInterventionStatus": setting.is_manager_intervented_active,
+                "interventionDeactivationTime": setting.interventedtimeValue,
+                "delayMessageProcessingStatus": setting.checkbox_processing_new_message,
+                "messageProcessingDelayTime": setting.new_message_processing_time,
+                "processImagesStatus": True,
+                "processVoiceMessagesStatus": setting.voice_detection,
+            }
         }
-    }
 
-    json_data_list.append(json_data)
+        json_data_list.append(json_data)
 
-json_output = json.dumps(json_data_list, indent=4, ensure_ascii=False)
+    json_output = json.dumps(json_data_list, indent=4, ensure_ascii=False)
 
-with open('knowledge.json', 'w', encoding='utf-8') as file:
-    file.write(json_output)
+    output_dir = 'json'
+    os.makedirs(output_dir, exist_ok=True)
 
-session.close()
+    file_path = os.path.join(output_dir, 'knowledge.json')
 
-print(f"Обработано {counter} настроек")
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(json_output)
+
+    session.close()
+
+    print(f"Обработано {counter} настроек Knowledge")
