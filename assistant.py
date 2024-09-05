@@ -49,6 +49,7 @@ def assistant():
 
         json_data = {
             "name": setting.name,
+            "is_enabled": setting.is_enabled,
             "assistantId": setting.assistant_id,
             "paymentSettings": {
                 "isOurTokensStatus": False,

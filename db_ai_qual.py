@@ -57,6 +57,7 @@ def db_ai_qual():
 
         json_data = {
             "name": setting.name,
+            "is_enabled": setting.is_enabled,
             "knowledgeLink": setting.knowledge_link,
             "contextSettings": {
                 "prompt": prompt_setting.context,

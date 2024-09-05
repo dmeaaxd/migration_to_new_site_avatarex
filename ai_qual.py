@@ -57,6 +57,7 @@ def ai_qual():
 
         json_data = {
             "name": setting.name,
+            "is_enabled": setting.is_enabled,
             "contextSettings": {
                 "prompt": prompt_setting.context,
                 "tokens": prompt_setting.max_tokens,
